@@ -167,6 +167,7 @@ usage() {
     echo "  -smb-c          Run smbclient enumeration"
     echo "  -smb-m          Run smbmap enumeration"
     echo "  -enum4          Run enum4linux-ng enumeration"
+    echo "  -nxc            Run NetExec SMB enumeration"
     echo "  -ftp            Run FTP enumeration"
     echo "  -msf            Start msfconsole multi-handler"
     echo "  -rdp            Run RDP command"
@@ -196,12 +197,14 @@ DO_RUST=false
 DO_SMB_CLIENT=false
 DO_SMB_MAP=false
 DO_ENUM4LINUX_NG=false
+DO_NXC=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -smb-c) DO_SMB_CLIENT=true ;;
         -smb-m) DO_SMB_MAP=true ;;
         -enum4) DO_ENUM4LINUX_NG=true ;;
+        -nxc) DO_NXC=true ;;
         -ftp) DO_FTP=true ;;
         -msf) DO_MSF=true ;;
         -nmap) DO_NMAP=true ;;
@@ -221,10 +224,21 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+# NetExec SMB Enumeration
+run_nxc() {
+    echo -e "${C_OKCYAN}[*] Running NetExec SMB enumeration on $TARGET${C_ENDC}"
+    if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
+        handle_command "nxc smb $TARGET -u '$USERNAME' -p '$PASSWORD'"
+    else
+        echo -e "${C_WARNING}NetExec requires credentials. Please provide them using -U option.${C_ENDC}"
+    fi
+}
+
 # Run selected options
 $DO_SMB_CLIENT && enum_smb
 $DO_SMB_MAP && enum_smb
 $DO_ENUM4LINUX_NG && enum_smb
+$DO_NXC && run_nxc
 $DO_FTP && enum_ftp
 $DO_MSF && start_msf
 $DO_NMAP && run_nmap "$TARGET" "$PORT"
