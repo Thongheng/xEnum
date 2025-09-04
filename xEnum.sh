@@ -20,6 +20,7 @@ USERPASS=""
 TARGET=""
 USERNAME=""
 PASSWORD=""
+DOMAIN=""
 
 # Parse credentials once and store them
 parse_credentials() {
@@ -168,6 +169,7 @@ usage() {
     echo "  -smb-m          Run smbmap enumeration"
     echo "  -enum4          Run enum4linux-ng enumeration"
     echo "  -nxc            Run NetExec SMB enumeration"
+    echo "  -bloodhound     Run BloodHound-CE enumeration"
     echo "  -ftp            Run FTP enumeration"
     echo "  -msf            Start msfconsole multi-handler"
     echo "  -rdp            Run RDP command"
@@ -176,6 +178,7 @@ usage() {
     echo "  -p port         LPORT for msf handler (default: 4444)"
     echo "  -P payload      Payload for msf handler (default: windows/meterpreter/reverse_tcp)"
     echo "  -c              Copy commands to clipboard instead of executing"
+    echo "  -d domain       Domain for BloodHound-CE (required with -bloodhound)"
     exit 1
 }
 
@@ -198,6 +201,7 @@ DO_SMB_CLIENT=false
 DO_SMB_MAP=false
 DO_ENUM4LINUX_NG=false
 DO_NXC=false
+DO_BLOODHOUND=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -205,6 +209,7 @@ while [[ $# -gt 0 ]]; do
         -smb-m) DO_SMB_MAP=true ;;
         -enum4) DO_ENUM4LINUX_NG=true ;;
         -nxc) DO_NXC=true ;;
+        -bloodhound) DO_BLOODHOUND=true ;;
         -ftp) DO_FTP=true ;;
         -msf) DO_MSF=true ;;
         -nmap) DO_NMAP=true ;;
@@ -218,6 +223,7 @@ while [[ $# -gt 0 ]]; do
         -p) PORT=$2; shift ;;
         -P) PAYLOAD=$2; shift ;;
         -c) CLIPBOARD=true ;;
+        -d) DOMAIN=$2; shift ;;
         -rdp) run_rdp "$TARGET" ;;
         *) usage ;;
     esac
@@ -234,11 +240,22 @@ run_nxc() {
     fi
 }
 
+# BloodHound-CE Enumeration
+run_bloodhound() {
+    echo -e "${C_OKCYAN}[*] Running BloodHound-CE enumeration on $TARGET${C_ENDC}"
+    if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ] && [ -n "$DOMAIN" ]; then
+        handle_command "bloodhound-ce-python -u '$USERNAME' -p '$PASSWORD' -ns $TARGET -d $DOMAIN -c all"
+    else
+        echo -e "${C_WARNING}BloodHound-CE requires username, password, and domain. Please provide them using -U and -d options.${C_ENDC}"
+    fi
+}
+
 # Run selected options
 $DO_SMB_CLIENT && enum_smb
 $DO_SMB_MAP && enum_smb
 $DO_ENUM4LINUX_NG && enum_smb
 $DO_NXC && run_nxc
+$DO_BLOODHOUND && run_bloodhound
 $DO_FTP && enum_ftp
 $DO_MSF && start_msf
 $DO_NMAP && run_nmap "$TARGET" "$PORT"
