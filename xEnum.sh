@@ -112,7 +112,6 @@ enum_ftp() {
     fi
     
     handle_command "lftp -u $ftp_user,$ftp_pass ftp://$TARGET"
-    handle_command "nmap -p 21 --script ftp-anon,ftp-syst,ftp-enum $TARGET"
 }
 
 # Nmap Command Function
