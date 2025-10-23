@@ -159,7 +159,7 @@ run_ssh() {
 run_rdp() {
     local target=$1
     local current_dir=$(pwd)
-    local cmd="xfreerdp3 /v:$target +clipboard /drive:share,$current_dir"
+    local cmd="xfreerdp3 /v:$target +clipboard /dynamic-resolution /drive:share,$current_dir"
     
     if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
         cmd="$cmd /u:$USERNAME /p:'$PASSWORD'"
