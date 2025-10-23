@@ -143,17 +143,28 @@ start_msf() {
     handle_command "$cmd"
 }
 
+# SSH Command Function
+run_ssh() {
+    local target=$1
+    if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+        echo -e "${C_FAIL}SSH requires username and password. Please provide them using -U option.${C_ENDC}"
+        exit 1
+    fi
+    local cmd="sshpass -p '$PASSWORD' ssh $USERNAME@$target"
+    echo -e "${C_OKCYAN}[*] Running SSH on $target${C_ENDC}"
+    handle_command "$cmd"
+}
+
 # RDP Command Function
 run_rdp() {
     local target=$1
     local current_dir=$(pwd)
-    local cmd="xfreerdp /v:$target"
+    local cmd="xfreerdp3 /v:$target +clipboard /drive:share,$current_dir"
     
     if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
         cmd="$cmd /u:$USERNAME /p:'$PASSWORD'"
     fi
     
-    cmd="$cmd /drive:transfer,\"$current_dir\" /dynamic-resolution +clipboard"
     echo -e "${C_OKCYAN}[*] Running RDP on $target${C_ENDC}"
     handle_command "$cmd"
 }
@@ -171,7 +182,8 @@ usage() {
     echo "  -bloodhound     Run BloodHound-CE enumeration"
     echo "  -ftp            Run FTP enumeration"
     echo "  -msf            Start msfconsole multi-handler"
-    echo "  -rdp            Run RDP command"
+    echo "  -rdp            Run RDP command with clipboard and shared drive"
+    echo "  -ssh            Run SSH command with sshpass"
     echo "  -U user:pass    Use credentials for authentication (optional)"
     echo "  -i iface        Network interface for msf handler (default: tun0)"
     echo "  -p port         LPORT for msf handler (default: 4444)"
@@ -194,6 +206,8 @@ DO_FTP=false
 DO_MSF=false
 DO_NMAP=false
 DO_RUST=false
+DO_RDP=false
+DO_SSH=false
 
 # SMB Enumeration flags
 DO_SMB_CLIENT=false
@@ -223,7 +237,8 @@ while [[ $# -gt 0 ]]; do
         -P) PAYLOAD=$2; shift ;;
         -c) CLIPBOARD=true ;;
         -d) DOMAIN=$2; shift ;;
-        -rdp) run_rdp "$TARGET" ;;
+        -rdp) DO_RDP=true ;;
+        -ssh) DO_SSH=true ;;
         *) usage ;;
     esac
     shift
@@ -259,3 +274,5 @@ $DO_FTP && enum_ftp
 $DO_MSF && start_msf
 $DO_NMAP && run_nmap "$TARGET" "$PORT"
 $DO_RUST && run_rustscan "$TARGET" "$PORT"
+$DO_RDP && run_rdp "$TARGET"
+$DO_SSH && run_ssh "$TARGET"
